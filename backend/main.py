@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
 import math
 
+from fastapi.responses import StreamingResponse
+import io
+import csv
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -370,6 +374,68 @@ async def create_baseline(machine_id: str):
         "reading_count": len(readings),
         "last_updated": datetime.now().isoformat(),
     }
+
+@app.get("/export/{machine_id}")
+async def export_machine_data(machine_id: str):
+    db = SessionLocal()
+
+    readings = (
+        db.query(SensorReading)
+        .filter(SensorReading.machine_id == machine_id)
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "id",
+        "timestamp",
+        "machine_id",
+        "temperature",
+        "humidity",
+        "vibration_x",
+        "vibration_y",
+        "vibration_z",
+        "vibration_magnitude",
+        "health_score",
+        "status",
+        "alerts",
+        "recommendations",
+        "trend_warning",
+        "trend_percent",
+    ])
+
+    for r in readings:
+        writer.writerow([
+            r.id,
+            r.timestamp,
+            r.machine_id,
+            r.temperature,
+            r.humidity,
+            r.vibration_x,
+            r.vibration_y,
+            r.vibration_z,
+            r.vibration_magnitude,
+            r.health_score,
+            r.status,
+            r.alerts,
+            r.recommendations,
+            r.trend_warning,
+            r.trend_percent,
+        ])
+
+    db.close()
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={machine_id}_report.csv"
+        },
+    )
 
 
 @app.get("/history")

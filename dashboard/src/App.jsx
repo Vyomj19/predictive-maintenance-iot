@@ -15,7 +15,6 @@ function App() {
   const [data, setData] = useState([]);
   const [baseline, setBaseline] = useState(null);
   const [baselineMessage, setBaselineMessage] = useState("");
-
   const [machineId, setMachineId] = useState("motor_1");
 
   const machines = ["motor_1", "motor_2", "fan_1", "pump_1"];
@@ -37,8 +36,15 @@ function App() {
 
   async function fetchBaseline() {
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/baseline/${machineId}`);
-      if (!res.data.error) setBaseline(res.data);
+      const res = await axios.get(
+        `http://127.0.0.1:8000/baseline/${machineId}`
+      );
+
+      if (!res.data.error) {
+        setBaseline(res.data);
+      } else {
+        setBaseline(null);
+      }
     } catch (err) {
       console.error("Baseline fetch failed:", err);
     }
@@ -79,6 +85,10 @@ function App() {
       console.error("Reset failed:", err);
       setBaselineMessage("Reset failed.");
     }
+  }
+
+  function exportReport() {
+    window.open(`http://127.0.0.1:8000/export/${machineId}`, "_blank");
   }
 
   useEffect(() => {
@@ -164,6 +174,7 @@ function App() {
         <div className="panel">
           <div className="panelHeader">
             <h2>Alerts</h2>
+
             <span className={alertList.length ? "pill danger" : "pill safe"}>
               {alertList.length ? `${alertList.length} active` : "clear"}
             </span>
@@ -176,7 +187,9 @@ function App() {
               </div>
             ))
           ) : (
-            <p className="muted">No active alerts. Machine is operating normally.</p>
+            <p className="muted">
+              No active alerts. Machine is operating normally.
+            </p>
           )}
 
           <h3>Recommended Actions</h3>
@@ -199,6 +212,8 @@ function App() {
             <div className="buttonGroup">
               <button onClick={createBaseline}>Update Baseline</button>
 
+              <button onClick={exportReport}>Export CSV</button>
+
               <button className="dangerButton" onClick={resetMachine}>
                 Reset Machine
               </button>
@@ -206,11 +221,13 @@ function App() {
           </div>
 
           {baselineMessage && <p className="success">{baselineMessage}</p>}
+
           {baseline?.baseline_change_message && (
             <div className="baselineAlert">
               ⚠ {baseline.baseline_change_message}
             </div>
           )}
+
           {baseline ? (
             <div className="baselineStats">
               <div>
