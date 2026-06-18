@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+
+node_modules/
+
+.pio/
+.vscode/
+
+sensor_data.db
+
+dist/
+build/
