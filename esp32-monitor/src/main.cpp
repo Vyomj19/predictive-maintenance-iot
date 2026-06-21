@@ -7,11 +7,11 @@
 #include <DHT.h>
 
 // ===== WIFI INFO =====
-const char* ssid = "phone";
-const char* password = "youknowit243";
+const char* ssid = "INSERT_WIFI_NAME_HERE";
+const char* password = "INSERT_WIFI_PASSWORD_HERE";
 
 // Use your computer's IPv4 address from ipconfig
-const char* serverUrl = "http://172.20.10.3:8000/sensor-data";
+const char* serverUrl = "http://INSERT_BACKEND_IP_HERE:8000/sensor-data";
 
 // ===== DHT11 =====
 #define DHTPIN 4
