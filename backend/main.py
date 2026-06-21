@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from database import SessionLocal, SensorReading, MachineBaseline
+from database import SessionLocal, SensorReading, MachineBaseline, AlertEvent
 
 app = FastAPI()
 
@@ -263,6 +263,37 @@ def analyze_machine(data: SensorData, baseline=None, trend_warning=""):
         "trend_warning": trend_warning,
     }
 
+def create_alert_event(db, machine_id, analysis):
+    if analysis["status"] != "warning":
+        return None
+
+    alert_text = ", ".join(analysis["alerts"])
+    recommendation_text = ", ".join(analysis["recommendations"])
+
+    if not alert_text:
+        return None
+
+    latest_alert = (
+        db.query(AlertEvent)
+        .filter(AlertEvent.machine_id == machine_id)
+        .order_by(AlertEvent.id.desc())
+        .first()
+    )
+
+    if latest_alert and latest_alert.message == alert_text:
+        return None
+
+    alert_event = AlertEvent(
+        machine_id=machine_id,
+        severity="warning",
+        message=alert_text,
+        recommendation=recommendation_text,
+    )
+
+    db.add(alert_event)
+    db.commit()
+
+    return alert_event
 
 @app.post("/sensor-data")
 async def receive_data(data: SensorData):
@@ -306,6 +337,7 @@ async def receive_data(data: SensorData):
     db.add(reading)
     db.commit()
     db.refresh(reading)
+    alert_event = create_alert_event(db, data.machine_id, analysis)
 
     updated_baseline = update_baseline_every_10_readings(
         db,
@@ -318,6 +350,7 @@ async def receive_data(data: SensorData):
         **analysis,
         "trend_percent": trend_percent,
         "auto_baseline_updated": updated_baseline is not None,
+        "alert_event_created" : alert_event is not None,
     }
 
 
@@ -512,6 +545,33 @@ async def reset_machine(machine_id: str):
 
     return {"message": f"{machine_id} reset successfully"}
 
+
+@app.get("/alerts")
+async def get_alerts():
+    db = SessionLocal()
+
+    alerts = (
+        db.query(AlertEvent)
+        .order_by(AlertEvent.id.desc())
+        .limit(50)
+        .all()
+    )
+
+    result = []
+
+    for alert in alerts:
+        result.append({
+            "id": alert.id,
+            "timestamp": alert.timestamp,
+            "machine_id": alert.machine_id,
+            "severity": alert.severity,
+            "message": alert.message,
+            "recommendation": alert.recommendation,
+        })
+
+    db.close()
+
+    return result
 
 @app.get("/")
 async def root():

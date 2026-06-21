@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from sqlalchemy import create_engine, Column, Integer, Float, String
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -14,6 +15,7 @@ class SensorReading(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(String, default=lambda: datetime.now().isoformat())
+
     machine_id = Column(String)
 
     temperature = Column(Float)
@@ -48,6 +50,18 @@ class MachineBaseline(Base):
 
     baseline_change_message = Column(String)
     baseline_change_percent = Column(Float)
+
+
+class AlertEvent(Base):
+    __tablename__ = "alert_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(String, default=lambda: datetime.now().isoformat())
+
+    machine_id = Column(String)
+    severity = Column(String)
+    message = Column(String)
+    recommendation = Column(String)
 
 
 Base.metadata.create_all(bind=engine)
