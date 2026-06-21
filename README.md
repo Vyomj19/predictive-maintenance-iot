@@ -128,6 +128,3 @@ DELETE /reset/{machine_id}
 * Machine learning failure prediction
 * Additional sensor integrations
 
-## Resume Summary
-
-Designed and developed a full-stack Industrial IoT predictive maintenance platform using ESP32, FastAPI, SQLite, and React. Implemented real-time telemetry collection, health scoring, baseline learning, trend analysis, anomaly detection, alert logging, and fleet monitoring through an interactive dashboard.
