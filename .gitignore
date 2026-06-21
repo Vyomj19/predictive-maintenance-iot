@@ -1,0 +1,25 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Database
+sensor_data.db
+*.db
+
+# Node
+node_modules/
+dist/
+
+# PlatformIO
+.pio/
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
